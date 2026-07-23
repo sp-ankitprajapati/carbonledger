@@ -1,0 +1,64 @@
+[
+  {"text": "diesel generator fuel purchase invoice", "label": "diesel_litre"},
+  {"text": "DG set fuel refill receipt", "label": "diesel_litre"},
+  {"text": "diesel purchase for backup generator", "label": "diesel_litre"},
+  {"text": "company vehicle diesel fuel bill", "label": "diesel_litre"},
+  {"text": "fleet truck diesel refuel", "label": "diesel_litre"},
+
+  {"text": "petrol purchase for company car", "label": "petrol_litre"},
+  {"text": "two wheeler petrol expense", "label": "petrol_litre"},
+  {"text": "fuel station receipt petrol", "label": "petrol_litre"},
+
+  {"text": "natural gas boiler fuel consumption", "label": "natural_gas_m3"},
+  {"text": "LPG gas cylinder for kitchen canteen", "label": "natural_gas_m3"},
+  {"text": "gas supply for industrial furnace", "label": "natural_gas_m3"},
+
+  {"text": "monthly electricity bill from state board", "label": "electricity_india_kwh"},
+  {"text": "factory electricity consumption invoice", "label": "electricity_india_kwh"},
+  {"text": "office power bill payment", "label": "electricity_india_kwh"},
+  {"text": "DISCOM electricity charges", "label": "electricity_india_kwh"},
+  {"text": "grid power consumption for production line", "label": "electricity_india_kwh"},
+
+  {"text": "EU subsidiary office electricity invoice", "label": "electricity_eu_kwh"},
+  {"text": "Germany warehouse power consumption", "label": "electricity_eu_kwh"},
+
+  {"text": "road transport invoice for raw material delivery", "label": "freight_road_tkm"},
+  {"text": "trucking charges inbound logistics", "label": "freight_road_tkm"},
+  {"text": "lorry freight bill for goods transport", "label": "freight_road_tkm"},
+  {"text": "courier and road logistics charges", "label": "freight_road_tkm"},
+
+  {"text": "container shipping invoice export", "label": "freight_sea_tkm"},
+  {"text": "ocean freight bill of lading charges", "label": "freight_sea_tkm"},
+  {"text": "sea cargo shipment to EU port", "label": "freight_sea_tkm"},
+
+  {"text": "air cargo shipment invoice", "label": "freight_air_tkm"},
+  {"text": "express air freight charges", "label": "freight_air_tkm"},
+
+  {"text": "cotton yarn purchase from supplier", "label": "purchased_goods_textile_kg"},
+  {"text": "fabric raw material invoice", "label": "purchased_goods_textile_kg"},
+  {"text": "textile dye and yarn purchase", "label": "purchased_goods_textile_kg"},
+  {"text": "garment raw material procurement", "label": "purchased_goods_textile_kg"},
+
+  {"text": "steel sheet purchase invoice", "label": "purchased_goods_steel_kg"},
+  {"text": "metal component procurement bill", "label": "purchased_goods_steel_kg"},
+  {"text": "iron rod purchase from vendor", "label": "purchased_goods_steel_kg"},
+
+  {"text": "plastic granules raw material purchase", "label": "purchased_goods_plastic_kg"},
+  {"text": "polymer resin procurement invoice", "label": "purchased_goods_plastic_kg"},
+  {"text": "PVC pellet purchase order", "label": "purchased_goods_plastic_kg"},
+
+  {"text": "flight ticket for sales team business trip", "label": "business_travel_air_km"},
+  {"text": "airfare reimbursement employee travel", "label": "business_travel_air_km"},
+  {"text": "domestic flight booking for client visit", "label": "business_travel_air_km"},
+
+  {"text": "employee shuttle bus service charges", "label": "employee_commute_km"},
+  {"text": "staff transportation contract payment", "label": "employee_commute_km"},
+
+  {"text": "municipal waste collection service invoice", "label": "waste_landfill_kg"},
+  {"text": "garbage disposal contractor bill", "label": "waste_landfill_kg"},
+  {"text": "factory solid waste removal charges", "label": "waste_landfill_kg"},
+
+  {"text": "municipal water supply bill", "label": "water_supply_m3"},
+  {"text": "water utility invoice factory", "label": "water_supply_m3"},
+  {"text": "borewell and water tanker charges", "label": "water_supply_m3"}
+]

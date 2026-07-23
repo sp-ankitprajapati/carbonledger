@@ -1,0 +1,7 @@
+venv/ 
+__pycache__/ 
+*.pyc 
+.env 
+*.joblib 
+data/generated_reports/ 
+data/sample_report.pdf
