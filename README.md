@@ -74,7 +74,7 @@ This is exposed via a **FastAPI** REST backend (`main.py`) and a
 
 **working:**
 - Full pipeline runs end-to-end, tested (`pytest tests/` — 8 passing tests)
-- Genuine trained neural network (not just calling an API and calling it "AI")
+- Includes a custom-trained MLP Classifier for local inference (reducing API latency and costs)
 - Deterministic, auditable calculation engine with full test coverage
 - Working FastAPI backend + Streamlit frontend, runnable locally in minutes
 - PDF report generation produces a real, structured, ESRS E1-style document
