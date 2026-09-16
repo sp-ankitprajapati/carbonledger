@@ -1,8 +1,8 @@
-# CarbonLedger — AI-Agent Powered Carbon Accounting Platform
+# CarbonLedger - AI Agent Powered Carbon Accounting Platform
 
-An end-to-end system that turns unstructured invoices/bills into structured
+An end to end system that turns unstructured invoices/bills into structured
 Scope 1/2/3 GHG emissions data and an ESRS E1 (CSRD)-aligned PDF report,
-using a multi-component AI pipeline: LLM document parsing, a trained neural
+using a multi component AI pipeline: LLM document parsing, a trained neural
 network classifier, retrieval-augmented escalation, and a deterministic
 calculation engine — with a full audit trail for compliance traceability.
 
@@ -73,7 +73,7 @@ This is exposed via a **FastAPI** REST backend (`main.py`) and a
 
 
 **working:**
-- Full pipeline runs end-to-end, tested (`pytest tests/` — 8 passing tests)
+- Full pipeline runs end to end, tested (`pytest tests/` — 8 passing tests)
 - Includes a custom-trained MLP Classifier for local inference (reducing API latency and costs)
 - Deterministic, auditable calculation engine with full test coverage
 - Working FastAPI backend + Streamlit frontend, runnable locally in minutes
@@ -81,7 +81,7 @@ This is exposed via a **FastAPI** REST backend (`main.py`) and a
 - Runs entirely on free tiers — Gemini API, Railway, Streamlit Cloud, Supabase
 
 **Known limitations**
-- Emission factors are reference-grade public values, not licensed/audited
+- Emission factors are reference grade public values, not licensed/audited
   figures — a production version needs verified, jurisdiction-specific,
   annually-updated factors.
 - TF-IDF retrieval has real recall limitations on synonyms/paraphrases.
