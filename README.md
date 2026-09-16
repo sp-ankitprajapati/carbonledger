@@ -6,8 +6,8 @@ using a multi-component AI pipeline: LLM document parsing, a trained neural
 network classifier, retrieval-augmented escalation, and a deterministic
 calculation engine — with a full audit trail for compliance traceability.
 
-Built as a portfolio/technical project to demonstrate full-stack + applied
-AI engineering skills relevant to SDE, ML, and AI-agent roles.
+Built as a portfolio project demonstrating end-to-end 
+applied AI engineering and full-stack development.
 
 **LLM used: Google Gemini (free tier)** — chosen so the entire project can
 be run, demoed, and iterated on at zero cost. Get a free API key at
@@ -72,7 +72,7 @@ This is exposed via a **FastAPI** REST backend (`main.py`) and a
 ---
 
 
-**Real and working:**
+**working:**
 - Full pipeline runs end-to-end, tested (`pytest tests/` — 8 passing tests)
 - Genuine trained neural network (not just calling an API and calling it "AI")
 - Deterministic, auditable calculation engine with full test coverage
@@ -80,8 +80,7 @@ This is exposed via a **FastAPI** REST backend (`main.py`) and a
 - PDF report generation produces a real, structured, ESRS E1-style document
 - Runs entirely on free tiers — Gemini API, Railway, Streamlit Cloud, Supabase
 
-**Known limitations (own these proactively in interviews — it reads as
-maturity, not weakness):**
+**Known limitations**
 - Emission factors are reference-grade public values, not licensed/audited
   figures — a production version needs verified, jurisdiction-specific,
   annually-updated factors.
