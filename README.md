@@ -72,6 +72,7 @@ This is exposed via a **FastAPI** REST backend (`main.py`) and a
 ---
 
 
+
 **working:**
 - Full pipeline runs end to end, tested (`pytest tests/` — 8 passing tests)
 - Includes a custom-trained MLP Classifier for local inference (reducing API latency and costs)
@@ -93,5 +94,29 @@ This is exposed via a **FastAPI** REST backend (`main.py`) and a
   demos and development, would need a paid tier for production traffic.
 
 ---
+## Setup
+
+## 🚀 Getting Started
+
+### Prerequisites
+* **Python:** Python 3.10 to 3.12 (Python 3.14 pre-release is not supported due to C++ compilation issues)
+* **API Key:** Free Gemini API key from [Google AI Studio](https://aistudio.google.com/app/apikey)
+
+---
+### Clone the Repository & Navigate to Folder
+```bash
+git clone https://github.com/sp-ankitprajapati/carbonledger
+cd carbonledger
+# Create virtual environment (forcing Python 3.12 if multiple versions are installed)
+py -3.12 -m venv venv
+
+# Activate virtual environment
+venv\Scripts\activate
+pip install -r requirements.txt
+
+copy .env.example .env
+# Add your free Gemini API key from https://aistudio.google.com
+streamlit run app.py
+```
 
 
