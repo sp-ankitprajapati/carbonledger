@@ -1,97 +1,118 @@
-"""
-main.py
--------
-FastAPI backend exposing the CarbonLedger pipeline as REST endpoints.
-Run with: uvicorn main:app --reload --port 8000
-Docs auto-generated at: http://localhost:8000/docs
-"""
+"""Local demonstration API. Explicit input modes and UUID-based artifact downloads."""
 
+from functools import lru_cache
+from pathlib import Path
+from typing import Literal
 import os
-from fastapi import FastAPI, UploadFile, File
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import Optional
-
+from fastapi import FastAPI, HTTPException, Path as ApiPath
+from fastapi.responses import FileResponse
+from pydantic import BaseModel, Field
 from app.agent import CarbonLedgerAgent
 from app.report_generator import generate_narrative, build_pdf_report
 
-app = FastAPI(
-    title="CarbonLedger API",
-    description="AI-agent powered Scope 1/2/3 carbon accounting pipeline for ESRS E1 / CSRD-aligned reporting.",
-    version="0.1.0",
-)
+app = FastAPI(title="CarbonLedger demonstration API", version="0.2.0")
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
-agent = CarbonLedgerAgent()
+@lru_cache(maxsize=2)
+def get_agent(mode, allow_experimental_model_decisions=False):
+    return CarbonLedgerAgent(
+        mode=mode, allow_experimental_model_decisions=allow_experimental_model_decisions
+    )
 
 
 class ProcessTextRequest(BaseModel):
-    document_text: str
+    document_text: str = Field(min_length=1)
+    mode: Literal["structured", "live"] = "structured"
+    allow_experimental_model_decisions: bool = False
 
 
-class GenerateReportRequest(BaseModel):
-    document_text: str
-    company_name: str
-    reporting_period: str
+class GenerateReportRequest(ProcessTextRequest):
+    company_name: str = Field(min_length=1, max_length=200)
+    reporting_period: str = Field(min_length=1, max_length=100)
+
+
+def process(req):
+    try:
+        return get_agent(
+            req.mode, req.allow_experimental_model_decisions
+        ).process_document(req.document_text)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+def payload(result):
+    return {
+        "run_id": result.run_id,
+        "mode": result.mode,
+        "summary": result.emissions_report.summary(),
+        "audit_trail": [vars(a) for a in result.audit_trail],
+        "unmatched_items": result.unmatched_items,
+        "partial_result": bool(result.unmatched_items),
+        "call_counts": result.call_counts,
+        "experimental_model_decisions_enabled": result.experimental_decisions,
+        "audit_url": f"/audit/{result.run_id}",
+    }
 
 
 @app.get("/")
 def root():
     return {
-        "service": "CarbonLedger API",
-        "status": "running",
-        "gemini_api_configured": bool(os.environ.get("GEMINI_API_KEY")),
-    }
-
-
-@app.post("/process")
-def process_document(req: ProcessTextRequest):
-    """Run the full agent pipeline on raw document text and return the
-    emissions summary + audit trail, without generating a PDF."""
-    result = agent.process_document(req.document_text)
-    return {
-        "summary": result.emissions_report.summary(),
-        "audit_trail": [vars(a) for a in result.audit_trail],
-        "unmatched_items": result.unmatched_items,
-    }
-
-
-@app.post("/generate-report")
-def generate_report(req: GenerateReportRequest):
-    """Run the full pipeline AND generate a PDF report, returning the
-    file path. In a real deployment this would return a signed download
-    URL (e.g. S3 presigned URL) instead of a local path."""
-    result = agent.process_document(req.document_text)
-    summary = result.emissions_report.summary()
-    narrative = generate_narrative(summary)
-
-    output_dir = os.path.join(os.path.dirname(__file__), "data", "generated_reports")
-    os.makedirs(output_dir, exist_ok=True)
-    safe_name = req.company_name.replace(" ", "_")
-    output_path = os.path.join(output_dir, f"{safe_name}_report.pdf")
-
-    build_pdf_report(
-        company_name=req.company_name,
-        reporting_period=req.reporting_period,
-        summary=summary,
-        narrative=narrative,
-        audit_trail_count=len(result.audit_trail),
-        output_path=output_path,
-    )
-
-    return {
-        "summary": summary,
-        "audit_trail": [vars(a) for a in result.audit_trail],
-        "report_path": output_path,
+        "service": "CarbonLedger",
+        "version": "0.2.0",
+        "default_mode": "structured",
+        "live_configured": bool(
+            os.getenv("GEMINI_API_KEY") and os.getenv("GEMINI_MODEL")
+        ),
     }
 
 
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.post("/process")
+def process_document(req: ProcessTextRequest):
+    return payload(process(req))
+
+
+@app.post("/generate-report")
+def generate_report(req: GenerateReportRequest):
+    result = process(req)
+    directory = Path(os.getenv("CARBONLEDGER_REPORT_DIR", "data/generated_reports"))
+    path = directory / f"{result.run_id}.pdf"
+    summary = result.emissions_report.summary()
+    build_pdf_report(
+        req.company_name,
+        req.reporting_period,
+        summary,
+        generate_narrative(summary),
+        output_path=str(path),
+        audit_trail=result.audit_trail,
+        run_id=result.run_id,
+        mode=result.mode,
+    )
+    return {**payload(result), "report_url": f"/reports/{result.run_id}"}
+
+
+@app.get("/reports/{run_id}")
+def download_report(run_id: str = ApiPath(pattern=r"^[0-9a-f]{32}$")):
+    path = (
+        Path(os.getenv("CARBONLEDGER_REPORT_DIR", "data/generated_reports"))
+        / f"{run_id}.pdf"
+    )
+    if not path.is_file():
+        raise HTTPException(404, "Report not found")
+    return FileResponse(
+        path, media_type="application/pdf", filename=f"carbonledger-{run_id}.pdf"
+    )
+
+
+@app.get("/audit/{run_id}")
+def download_audit(run_id: str = ApiPath(pattern=r"^[0-9a-f]{32}$")):
+    path = Path(os.getenv("CARBONLEDGER_AUDIT_DIR", "data/audit")) / f"{run_id}.json"
+    if not path.is_file():
+        raise HTTPException(404, "Audit not found")
+    return FileResponse(
+        path, media_type="application/json", filename=f"audit-{run_id}.json"
+    )

@@ -23,12 +23,13 @@ Why this design instead of calling an LLM for every line item:
 import json
 import os
 import joblib
+from pathlib import Path
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import Pipeline
 
-MODEL_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "line_item_classifier.joblib")
-TRAINING_DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "training_data.json")
+MODEL_PATH = os.getenv("CARBONLEDGER_MODEL_PATH", "data/line_item_classifier.joblib")
+TRAINING_DATA_PATH = str(Path(__file__).parent / "data" / "training_data.json")
 
 CONFIDENCE_THRESHOLD = 0.55  # below this, agent.py escalates to Gemini for review
 
@@ -44,20 +45,32 @@ def load_training_data():
 def train_classifier(save: bool = True) -> Pipeline:
     texts, labels = load_training_data()
 
-    pipeline = Pipeline([
-        ("tfidf", TfidfVectorizer(ngram_range=(1, 2), min_df=1, stop_words="english")),
-        ("nn", MLPClassifier(
-            hidden_layer_sizes=(64, 32),   # two hidden layers -> real neural network
-            activation="relu",
-            solver="adam",
-            max_iter=2000,
-            random_state=42,
-        )),
-    ])
+    pipeline = Pipeline(
+        [
+            (
+                "tfidf",
+                TfidfVectorizer(ngram_range=(1, 2), min_df=1, stop_words="english"),
+            ),
+            (
+                "nn",
+                MLPClassifier(
+                    hidden_layer_sizes=(
+                        64,
+                        32,
+                    ),  # two hidden layers -> real neural network
+                    activation="relu",
+                    solver="adam",
+                    max_iter=2000,
+                    random_state=42,
+                ),
+            ),
+        ]
+    )
 
     pipeline.fit(texts, labels)
 
     if save:
+        Path(MODEL_PATH).parent.mkdir(parents=True, exist_ok=True)
         joblib.dump(pipeline, MODEL_PATH)
 
     return pipeline

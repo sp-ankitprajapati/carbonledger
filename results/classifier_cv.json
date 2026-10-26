@@ -1,0 +1,24 @@
+{
+  "design": "2-fold stratified CV, seed42; vectorizer fits each training fold only",
+  "limitations": "48 synthetic examples across15 classes. No independent invoice holdout or live LLM benchmark. Confidence uncalibrated. Not evidence of90% API savings.",
+  "models": [
+    {
+      "model": "mlp",
+      "n_samples": 48,
+      "accuracy": 0.3958333333333333,
+      "macro_f1": 0.34735138499844387,
+      "threshold": 0.55,
+      "fraction_accepted_locally": 0.2708333333333333,
+      "accepted_accuracy": 0.38461538461538464
+    },
+    {
+      "model": "logistic_regression",
+      "n_samples": 48,
+      "accuracy": 0.20833333333333334,
+      "macro_f1": 0.11066217732884401,
+      "threshold": 0.55,
+      "fraction_accepted_locally": 0.0,
+      "accepted_accuracy": null
+    }
+  ]
+}

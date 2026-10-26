@@ -6,7 +6,7 @@ Deterministic Scope 1 / Scope 2 / Scope 3 emissions calculation engine.
 Design note: emissions math should NEVER be left to an LLM (hallucination
 risk on numbers is unacceptable for a compliance product). The LLM/agent
 layer (agent.py) is only used for: parsing unstructured documents into
-structured activity data, and writing the narrative sections of the report.
+structured activity data, while draft narrative sections are generated from the computed summary.
 All arithmetic happens here, in plain deterministic Python, so the output
 numbers are reproducible and auditable — this separation of concerns is
 itself a key design decision worth explaining in an interview.
@@ -14,14 +14,19 @@ itself a key design decision worth explaining in an interview.
 
 from dataclasses import dataclass, field
 from typing import List, Dict
+import math
 from app.emission_factors import get_factor, EmissionFactor
+from app.units import normalize_quantity
 
 
 @dataclass
 class ActivityRecord:
-    activity_key: str          # must match a key in EMISSION_FACTORS
-    quantity: float            # amount in the factor's native unit
-    source_label: str = ""     # e.g. "Electricity bill - March 2026"
+    activity_key: str  # must match a key in EMISSION_FACTORS
+    quantity: float  # amount in source_unit, or native units for legacy Python callers
+    source_label: str = ""  # e.g. "Electricity bill - March 2026"
+    source_unit: str = (
+        ""  # blank only for Python callers explicitly supplying native units
+    )
 
 
 @dataclass
@@ -35,6 +40,9 @@ class EmissionResult:
     scope: int
     category: str
     source_label: str
+    source_quantity: float = 0
+    source_unit: str = ""
+    factor_set: str = "demo-reference-v1"
 
 
 @dataclass
@@ -43,17 +51,22 @@ class EmissionsReport:
 
     def total_by_scope(self, scope: int) -> float:
         return round(
-            sum(r.emissions_tco2e for r in self.records if r.scope == scope), 4
+            math.fsum(r.emissions_tco2e for r in self.records if r.scope == scope), 4
         )
 
     def total_by_category(self) -> Dict[str, float]:
-        out: Dict[str, float] = {}
-        for r in self.records:
-            out[r.category] = round(out.get(r.category, 0) + r.emissions_tco2e, 4)
-        return out
+        return {
+            category: round(
+                math.fsum(
+                    r.emissions_tco2e for r in self.records if r.category == category
+                ),
+                4,
+            )
+            for category in sorted({r.category for r in self.records})
+        }
 
     def grand_total(self) -> float:
-        return round(sum(r.emissions_tco2e for r in self.records), 4)
+        return round(math.fsum(r.emissions_tco2e for r in self.records), 4)
 
     def summary(self) -> Dict:
         return {
@@ -64,7 +77,9 @@ class EmissionsReport:
             "by_category": self.total_by_category(),
             "scope_3_share_pct": round(
                 100 * self.total_by_scope(3) / self.grand_total(), 1
-            ) if self.grand_total() > 0 else 0,
+            )
+            if self.grand_total() > 0
+            else 0,
         }
 
 
@@ -73,18 +88,25 @@ def calculate_emissions(activities: List[ActivityRecord]) -> EmissionsReport:
     report = EmissionsReport()
     for act in activities:
         factor: EmissionFactor = get_factor(act.activity_key)
-        emissions_kg = act.quantity * factor.factor_kgco2e
+        quantity = normalize_quantity(
+            act.quantity, act.source_unit or factor.unit, factor.unit
+        )
+        emissions_kg = quantity * factor.factor_kgco2e
+        if not math.isfinite(emissions_kg):
+            raise ValueError("Calculated emissions overflowed")
         report.records.append(
             EmissionResult(
                 activity_key=act.activity_key,
-                quantity=act.quantity,
+                quantity=quantity,
                 unit=factor.unit,
                 factor_kgco2e=factor.factor_kgco2e,
-                emissions_kgco2e=round(emissions_kg, 3),
-                emissions_tco2e=round(emissions_kg / 1000, 5),
+                emissions_kgco2e=emissions_kg,
+                emissions_tco2e=emissions_kg / 1000,
                 scope=factor.scope,
                 category=factor.category,
                 source_label=act.source_label,
+                source_quantity=float(act.quantity),
+                source_unit=act.source_unit or factor.unit,
             )
         )
     return report
@@ -101,4 +123,5 @@ if __name__ == "__main__":
     ]
     rep = calculate_emissions(sample)
     import json
+
     print(json.dumps(rep.summary(), indent=2))

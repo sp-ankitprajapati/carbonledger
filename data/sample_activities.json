@@ -1,0 +1,4 @@
+[
+  {"description":"Generator diesel", "quantity":100, "unit":"litre", "activity_key":"diesel_litre", "source_label":"DEMO-001"},
+  {"description":"Electricity consumption", "quantity":2, "unit":"MWh", "activity_key":"electricity_india_kwh", "source_label":"DEMO-002"}
+]
