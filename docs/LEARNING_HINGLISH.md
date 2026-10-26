@@ -4,13 +4,13 @@ Yeh current upgrade ka guide hai. Old walkthrough historical source explain kart
 
 ## 1. Input mode ka real meaning
 
-Structured mode ka matlab JSON mein known quantities/units/categories dena. Yeh mock extraction nahi. Tum 2 MWh doge toh 2000 kWh calculate honge;4 MWh doge toh 4000 kWh. Live mode invoice text se Gemini extraction karta hai, jiske liye credentials aur currently available model name chahiye. Missing key ya malformed extraction ko fixed 450 litre se replace nahi karte.
+Structured mode ka matlab JSON mein known quantities/units/categories dena. Yeh mock extraction nahi. Tum 2 MWh doge toh 2,000 kWh calculate honge;4 MWh doge toh 4,000 kWh. Live mode invoice text se Gemini extraction karta hai, jiske liye credentials aur currently available model name chahiye. Missing key ya malformed extraction ko fixed 450 litre se replace nahi karte.
 
 ## 2. Same units par math
 
 app/units.py har known unit ko dimension aur scale se map karta hai. MWh aur kWh same energy dimension hain. kg aur litre alag hain. Density assume karke convert nahi karte. Formula: normalized=quantity*source_scale / target_scale. app/calculator.py normalized quantity*factor karke kgCO2e aur tonnes nikalta hai. Source quantity/unit record mein bachte hain.
 
-Practice: 2 MWh*1000=2000 kWh;2000*.716=1432 kgCO2e=1.432 tonnes.100 litre diesel*2.68=268 kg=.268 tonnes. Combined total 1.7 tonnes. Tiny line items ko round karne se pehle sum karna zaroori hai, warna small contributions disappear ho sakte hain.
+Practice: 2 MWh * 1000=2000 kWh;2000 * 0.716=1,432 kgCO2e = 1.432 tonnes. 100 litre diesel * 2.68=268 kg = 0.268 tonnes. Combined total 1.7 tonnes. Tiny line items ko round karne se pehle sum karna zaroori hai, warna small contributions disappear ho sakte hain.
 
 ## 3. Classifier ka result weak tha toh kya badla?
 

@@ -93,6 +93,7 @@ def build_pdf_report(
         story.extend(
             [
                 p(f"{i}. {row['line_item']}", "Heading3"),
+                p(f"Source label: {row.get('source_label', '')}"),
                 p(
                     f"Status: {row['status']}; source: {row['decision_source']}; category: {row['activity_key']}"
                 ),

@@ -21,6 +21,7 @@ class AuditEntry:
     confidence_or_reasoning: str
     source_quantity: float
     source_unit: str
+    source_label: str = ""
     status: str = "unmatched"
     normalized_quantity: float | None = None
     normalized_unit: str | None = None
@@ -135,7 +136,15 @@ class CarbonLedgerAgent:
                         f"confidence={cls['confidence']}",
                         "neural_network",
                     )
-            entry = AuditEntry(desc, source, key, reason, quantity, unit)
+            entry = AuditEntry(
+                desc,
+                source,
+                key,
+                reason,
+                quantity,
+                unit,
+                source_label=item.get("source_label", ""),
+            )
             if (
                 source != "provided_activity_key"
                 and key != "UNMATCHED"

@@ -12,6 +12,7 @@ from app.document_parser import extract_activity_data
 def item(**updates):
     return {
         "description": "Electricity",
+        "source_label": "INV-DEMO",
         "quantity": 2,
         "unit": "MWh",
         "activity_key": "electricity_india_kwh",
@@ -74,6 +75,7 @@ def test_changed_input_changes_actual_total_and_durable_audit(tmp_path):
     saved = json.loads(Path(a.audit_path).read_text())
     assert saved["audit_trail"][0]["normalized_quantity"] == 2000
     assert saved["audit_trail"][0]["source_unit"] == "MWh"
+    assert saved["audit_trail"][0]["source_label"] == "INV-DEMO"
     assert saved["partial_result"] is False
     assert a.call_counts == {"extraction": 0, "classification": 0}
     assert a.run_id != b.run_id
