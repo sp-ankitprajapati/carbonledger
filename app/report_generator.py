@@ -34,6 +34,7 @@ def build_pdf_report(
     path = Path(output_path)
     path.parent.mkdir(parents=True, exist_ok=True)
     styles = getSampleStyleSheet()
+    styles["Heading2"].spaceBefore = 8
 
     def p(text, style="BodyText"):
         return Paragraph(escape(str(text)), styles[style])
@@ -65,7 +66,7 @@ def build_pdf_report(
             [
                 ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#E6F2ED")),
                 ("GRID", (0, 0), (-1, -1), 0.4, colors.lightgrey),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
             ]
         )
     )
@@ -117,8 +118,8 @@ def build_pdf_report(
     SimpleDocTemplate(
         str(path),
         pagesize=A4,
-        topMargin=1.7 * cm,
-        bottomMargin=1.7 * cm,
+        topMargin=1.5 * cm,
+        bottomMargin=1.5 * cm,
         leftMargin=2 * cm,
         rightMargin=2 * cm,
     ).build(story)
