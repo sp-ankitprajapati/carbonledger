@@ -1,129 +1,131 @@
-"""
-streamlit_app.py
------------------
-Interactive demo frontend. Run with:
-    streamlit run frontend/streamlit_app.py
+"""Run with streamlit run frontend/streamlit_app.py from the repository root."""
 
-Lets you paste/upload invoice text, watch the agent pipeline run step by
-step (parsing -> classification -> retrieval/escalation -> calculation),
-see the audit trail, and download the generated ESRS E1-aligned PDF.
-"""
-
-import sys
+import json
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+import sys
+from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import streamlit as st
 import pandas as pd
-
 from app.agent import CarbonLedgerAgent
 from app.report_generator import generate_narrative, build_pdf_report
 
-st.set_page_config(page_title="CarbonLedger — AI Carbon Accounting", page_icon="🌍", layout="wide")
-
-st.title("🌍 CarbonLedger")
-st.caption("AI-agent powered Scope 1/2/3 carbon accounting · ESRS E1-aligned reporting · Portfolio/technical demo project")
-
-if not os.environ.get("GEMINI_API_KEY"):
-    st.info(
-        "Running in **mock mode** — no `GEMINI_API_KEY` environment variable set. "
-        "Document parsing, LLM escalation, and report narrative will use clearly-labeled "
-        "fallback stubs. Get a free key at aistudio.google.com/apikey to see live Gemini API calls.",
-        icon="ℹ️",
-    )
-
-if "agent" not in st.session_state:
-    st.session_state.agent = CarbonLedgerAgent()
-
-with st.sidebar:
-    st.header("Company details")
-    company_name = st.text_input("Company name", value="Sample Exports Pvt Ltd")
-    reporting_period = st.text_input("Reporting period", value="Q1 2026 (Jan–Mar)")
-    st.divider()
-    st.caption(
-        "**Architecture:** Gemini (document parsing + narrative generation) → "
-        "sklearn MLP neural network (line-item classification) → TF-IDF retrieval "
-        "(RAG fallback for low-confidence items) → deterministic Python calculation "
-        "engine → ReportLab PDF generation."
-    )
-
-sample_doc = """Invoice: Bharat Petroleum
-Item: Diesel fuel for backup generator, 1200 litres
-
-Invoice: State Electricity Board
-Item: Industrial electricity consumption, 84000 kWh
-
-Invoice: XYZ Logistics
-Item: Road freight transport of raw materials, 15000 tonne-km
-
-Invoice: Cotton Traders Co
-Item: Cotton yarn raw material purchase, 22000 kg
-
-Invoice: City Waste Management
-Item: Factory waste disposal, 3400 kg sent to landfill"""
-
-document_text = st.text_area(
-    "Paste invoice / bill / supplier statement text",
-    value=sample_doc,
-    height=220,
+st.set_page_config(page_title="CarbonLedger", page_icon=":material/eco:", layout="wide")
+st.title("CarbonLedger")
+st.caption(
+    "Scope 1/2/3 calculation with demonstration factors and item-level audit records."
 )
+mode_label = st.segmented_control(
+    "Input mode", ["Structured JSON", "Live invoice text"], default="Structured JSON"
+)
+mode = "live" if mode_label == "Live invoice text" else "structured"
+if st.session_state.get("last_mode") != mode:
+    st.session_state.update(last_mode=mode, result=None, pdf=None)
+if mode == "structured":
+    st.info(
+        "Offline mode reads the quantities and categories you supply. Choose live mode to extract invoice text using Gemini."
+    )
+    sample = (
+        Path(__file__).resolve().parents[1] / "data/sample_activities.json"
+    ).read_text()
+else:
+    st.info(
+        "Live extraction needs GEMINI_API_KEY and GEMINI_MODEL in the environment. Provider usage may be billable."
+    )
+    sample = "Invoice DEMO-001: diesel generator fuel, 100 litres."
 
-col1, col2 = st.columns([1, 1])
-run_button = col1.button("▶ Run agent pipeline", type="primary", use_container_width=True)
-report_button = col2.button("📄 Run + generate PDF report", use_container_width=True)
 
-if run_button or report_button:
-    with st.spinner("Agent processing document..."):
-        result = st.session_state.agent.process_document(document_text)
-        summary = result.emissions_report.summary()
+@st.cache_resource(max_entries=4)
+def get_agent(input_mode, allow_experimental):
+    return CarbonLedgerAgent(
+        mode=input_mode, allow_experimental_model_decisions=allow_experimental
+    )
 
-    st.success(f"Processed {len(result.audit_trail)} line items · {len(result.unmatched_items)} unmatched")
 
-    m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Scope 1 (tCO2e)", summary["scope_1_tco2e"])
-    m2.metric("Scope 2 (tCO2e)", summary["scope_2_tco2e"])
-    m3.metric("Scope 3 (tCO2e)", summary["scope_3_tco2e"])
-    m4.metric("Total (tCO2e)", summary["total_tco2e"], delta=f"{summary['scope_3_share_pct']}% Scope 3")
-
-    st.subheader("Emissions by category")
-    if summary["by_category"]:
-        cat_df = pd.DataFrame(
-            list(summary["by_category"].items()), columns=["Category", "tCO2e"]
-        ).sort_values("tCO2e", ascending=False)
-        st.bar_chart(cat_df.set_index("Category"))
-        st.dataframe(cat_df, use_container_width=True, hide_index=True)
-
-    st.subheader("🔍 Agent audit trail")
-    st.caption("Every classification decision, and which component made it — required for compliance traceability.")
-    audit_df = pd.DataFrame([vars(a) for a in result.audit_trail])
-    if not audit_df.empty:
-        def highlight_source(row):
-            color = "#FAEEDA" if row["decision_source"] == "llm_escalation" else "#E1F5EE"
-            return [f"background-color: {color}"] * len(row)
-        st.dataframe(audit_df.style.apply(highlight_source, axis=1), use_container_width=True, hide_index=True)
-
+with st.form("invoice"):
+    company = st.text_input("Company name", "Sample Exports Pvt Ltd")
+    period = st.text_input("Reporting period", "Demo period")
+    document = st.text_area(
+        "Activity JSON" if mode == "structured" else "Invoice text",
+        sample,
+        height=240,
+        key=f"document_{mode}",
+    )
+    experimental = st.checkbox(
+        "Calculate with experimental model suggestions",
+        value=False,
+        help="The small synthetic-data classifier is weakly validated. Leave this off to require checked activity keys.",
+    )
+    create_pdf = st.checkbox("Create a PDF with the audit appendix", value=True)
+    submitted = st.form_submit_button(
+        "Process activities", type="primary", width="stretch"
+    )
+if submitted:
+    st.session_state.update(result=None, pdf=None)
+    try:
+        with st.spinner("Processing activities..."):
+            result = get_agent(mode, experimental).process_document(document)
+            st.session_state.result = result
+            if create_pdf:
+                path = (
+                    Path(os.getenv("CARBONLEDGER_REPORT_DIR", "data/generated_reports"))
+                    / f"{result.run_id}.pdf"
+                )
+                summary = result.emissions_report.summary()
+                build_pdf_report(
+                    company,
+                    period,
+                    summary,
+                    generate_narrative(summary),
+                    output_path=str(path),
+                    audit_trail=result.audit_trail,
+                    run_id=result.run_id,
+                    mode=result.mode,
+                )
+                st.session_state.pdf = path.read_bytes()
+    except Exception as exc:
+        st.error(f"Processing failed: {exc}")
+result = st.session_state.get("result")
+if result is not None:
+    st.caption(f"Run {result.run_id}. Input mode: {result.mode}.")
     if result.unmatched_items:
-        st.warning(f"Unmatched line items (need manual review): {result.unmatched_items}")
-
-    if report_button:
-        with st.spinner("Generating narrative + PDF report..."):
-            narrative = generate_narrative(summary)
-            output_dir = os.path.join(os.path.dirname(__file__), "..", "data", "generated_reports")
-            os.makedirs(output_dir, exist_ok=True)
-            output_path = os.path.join(output_dir, f"{company_name.replace(' ', '_')}_report.pdf")
-            build_pdf_report(
-                company_name=company_name,
-                reporting_period=reporting_period,
-                summary=summary,
-                narrative=narrative,
-                audit_trail_count=len(result.audit_trail),
-                output_path=output_path,
-            )
-        st.subheader("📄 Generated report")
-        with open(output_path, "rb") as f:
-            st.download_button(
-                "⬇ Download ESRS E1-aligned PDF report",
-                data=f.read(),
-                file_name=os.path.basename(output_path),
-                mime="application/pdf",
-            )
+        st.warning(
+            "Partial result: some items need review and are excluded from the totals."
+        )
+    elif not result.audit_trail:
+        st.info(
+            "No activity items were found. A zero result does not establish zero organizational emissions."
+        )
+    else:
+        st.success(f"Calculated {len(result.emissions_report.records)} activity items.")
+    summary = result.emissions_report.summary()
+    for column, label, key in zip(
+        st.columns(4),
+        ["Scope 1", "Scope 2", "Scope 3", "Total"],
+        ["scope_1_tco2e", "scope_2_tco2e", "scope_3_tco2e", "total_tco2e"],
+    ):
+        column.metric(f"{label} (tCO2e)", summary[key])
+    st.subheader("Item audit")
+    if result.audit_trail:
+        st.dataframe(
+            pd.DataFrame([vars(a) for a in result.audit_trail]),
+            hide_index=True,
+            alt="Classification and unit-normalization decisions for each activity",
+        )
+    st.download_button(
+        "Download audit JSON",
+        Path(result.audit_path).read_bytes(),
+        file_name=f"audit-{result.run_id}.json",
+        mime="application/json",
+    )
+    if st.session_state.get("pdf"):
+        st.download_button(
+            "Download draft PDF",
+            st.session_state.pdf,
+            file_name=f"carbonledger-{result.run_id}.pdf",
+            mime="application/pdf",
+        )
+st.caption(
+    "Demonstration factors and static reporting scopes require independent review before real disclosures."
+)
