@@ -71,7 +71,7 @@ Factors are the original static **demo-reference-v1** table. Their source/year/g
 
 Read [Hinglish guide](docs/LEARNING_HINGLISH.md), [model card](docs/MODEL_CARD.md) and [change evidence](results/verification.json). To rerun CV: `python scripts/evaluate_classifier.py` after editable installation. The vectorizer fits each training fold separately. The synthetic CV is diagnostic and is not an independent invoice benchmark.
 
-## Accurate CV wording
+## Description
 
 - Built a carbon-accounting prototype with compatible-unit normalization, deterministic Scope 1/2/3 calculations and persisted item-level audit records.
 - Implemented confidence-gated TF-IDF/MLP and retrieval-assisted category suggestions, with constrained escalation and explicit confirmation for weakly validated model outputs.
