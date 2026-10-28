@@ -1,19 +1,8 @@
-"""
-emission_factors.py
---------------------
-Static knowledge base of GHG emission factors used to convert raw activity
-data (litres of diesel, kWh of electricity, km of freight, kg of waste)
-into CO2-equivalent emissions (tCO2e).
+"""Static demonstration emission-factor table.
 
-Sources (publicly published, standard reference factors):
-  - GHG Protocol Corporate Standard, Cross-Sector Tools
-  - IEA / CEA (Central Electricity Authority, India) grid emission factor
-  - DEFRA (UK) freight/logistics factors, used as international fallback
-
-NOTE: These are reference-grade factors suitable for a demo / portfolio
-project. A production compliance product would need factors licensed or
-verified against the latest published GHG Protocol / DEFRA tables and
-country-specific grid factors updated annually.
+Factors convert compatible activity quantities to tonnes of CO2 equivalent.
+Their source, year and geographic suitability have not been independently
+verified; use appropriate verified factors for actual disclosures.
 """
 
 from dataclasses import dataclass

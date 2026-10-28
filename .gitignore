@@ -10,3 +10,8 @@ dist/
 data/audit/
 data/generated_reports/
 data/*.joblib
+
+# Personal study materials
+/docs/*HINGLISH*.md
+/docs/practice_basics.py
+/study-notes/

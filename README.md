@@ -1,12 +1,12 @@
 # CarbonLedger
 
-A portfolio carbon-accounting pipeline that validates activity input, suggests emission categories, normalizes compatible units, calculates Scope 1/2/3 totals and exports item-level JSON audits and a draft PDF. Python, FastAPI, scikit-learn, lexical RAG, optional Gemini, Streamlit and ReportLab.
+A carbon-accounting prototype that validates activity input, suggests emission categories, normalizes compatible units, calculates Scope 1/2/3 totals and exports item-level JSON audits and a draft PDF. Python, FastAPI, scikit-learn, lexical RAG, optional Gemini, Streamlit and ReportLab.
 
 ## Verified status
 
 **29 local tests pass**, including API downloads and a headless Streamlit submission. The supplied structured example produces **1.7000 tCO2e**: 100 litres diesel = 0.268 tonnes; 2 MWh electricity = 1.432 tonnes. JSON audits preserve original and normalized quantities, factor-set identity, decisions and rejected items. The PDF includes its audit appendix.
 
-The 48-example / 15-class synthetic corpus is too small for a reliable invoice classifier. Exploratory two-fold stratified CV yields MLP accuracy **39.58%**, macro F1 **0.3474**. At the old 0.55 threshold, only 27.08% of CV predictions are accepted, with 38.46% accuracy among accepted items. These uncalibrated scores do not support the previous 90% API-savings claim. See [evaluation evidence](results/classifier_cv.json) and [model card](docs/MODEL_CARD.md).
+The 48-example / 15-class synthetic corpus is too small for a reliable invoice classifier. Exploratory two-fold stratified CV yields MLP accuracy **39.58%**, macro F1 **0.3474**. At a 0.55 confidence threshold, only 27.08% of CV predictions are accepted, with 38.46% accuracy among accepted items. These uncalibrated scores do not establish reliable automated classification or provider-call savings. See [evaluation evidence](results/classifier_cv.json) and [model card](docs/MODEL_CARD.md).
 
 **Model suggestions require category confirmation by default.** Supply a checked activity_key in structured input to calculate normally. An explicit experimental opt-in restores confidence-gated automated classification for demonstrations. It is recorded in the response and audit. A high model score is not independent verification.
 
@@ -56,7 +56,7 @@ MWh/kWh/Wh, kg/g/metric tonnes, litre/ml and explicit cubic metres support compa
 
 Factors are the original static **demo-reference-v1** table. Their source/year/geography suitability has not been independently verified. Scope assignment follows static activity keys and does not determine organizational reporting boundaries. The ESRS-inspired report structure does not establish ESRS/CSRD compliance, audit assurance or a complete emissions inventory. Scanned-image OCR is not implemented.
 
-## Code and learning map
+## Code map
 
 | File | Responsibility |
 | --- | --- |
@@ -69,12 +69,7 @@ Factors are the original static **demo-reference-v1** table. Their source/year/g
 | main.py / frontend/streamlit_app.py | REST and Streamlit entry points |
 | scripts/evaluate_classifier.py | Reproducible small-corpus CV with logistic baseline |
 
-Read [Hinglish guide](docs/LEARNING_HINGLISH.md), [model card](docs/MODEL_CARD.md) and [change evidence](results/verification.json). To rerun CV: `python scripts/evaluate_classifier.py` after editable installation. The vectorizer fits each training fold separately. The synthetic CV is diagnostic and is not an independent invoice benchmark.
+See the [model card](docs/MODEL_CARD.md) and [verification record](results/verification.json). To rerun CV: `python scripts/evaluate_classifier.py` after editable installation. The vectorizer fits each training fold separately. The synthetic CV is diagnostic and is not an independent invoice benchmark.
 
-## Description
-
-- Built a carbon-accounting prototype with compatible-unit normalization, deterministic Scope 1/2/3 calculations and persisted item-level audit records.
-- Implemented confidence-gated TF-IDF/MLP and retrieval-assisted category suggestions, with constrained escalation and explicit confirmation for weakly validated model outputs.
-- Added FastAPI artifact downloads, Streamlit workflow, audited draft PDFs and29 automated tests; published small-corpus evaluation and limitations.
 
 Next model improvement requires a larger independently labeled invoice set, suitable geography/year-specific factors, calibrated routing and measured provider-call counts. Adding a different model alone does not establish reliable accounting.

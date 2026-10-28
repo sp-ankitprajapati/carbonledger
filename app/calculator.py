@@ -1,15 +1,7 @@
-"""
-calculator.py
--------------
-Deterministic Scope 1 / Scope 2 / Scope 3 emissions calculation engine.
+"""Deterministic Scope 1, Scope 2 and Scope 3 emissions calculations.
 
-Design note: emissions math should NEVER be left to an LLM (hallucination
-risk on numbers is unacceptable for a compliance product). The LLM/agent
-layer (agent.py) is only used for: parsing unstructured documents into
-structured activity data, while draft narrative sections are generated from the computed summary.
-All arithmetic happens here, in plain deterministic Python, so the output
-numbers are reproducible and auditable — this separation of concerns is
-itself a key design decision worth explaining in an interview.
+Activity quantities are normalized before applying the static factor table.
+Model-assisted parsing is separate from the arithmetic and report totals.
 """
 
 from dataclasses import dataclass, field

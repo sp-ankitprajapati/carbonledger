@@ -111,7 +111,7 @@ def build_pdf_report(
         [
             Spacer(1, 0.4 * cm),
             p(
-                "Portfolio technology demonstration. No external assurance or formal ESRS/CSRD compliance assessment. Local JSON audit files are editable records, not a tamper-proof ledger."
+                "Prototype technology demonstration. No external assurance or formal ESRS/CSRD compliance assessment. Local JSON audit files are editable records, not a tamper-proof ledger."
             ),
         ]
     )
